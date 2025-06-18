@@ -1,6 +1,8 @@
+version: '3.8'
+
 services:
 
-  #NODE WEB
+  # NODE WEB
   nodeweb-container:
     build:
       context: .
@@ -14,12 +16,12 @@ services:
       - IS_CONTAINER=TRUE
       - POSTGRES_HOST=postgres_host
       - POSTGRES_PORT=5432
-      - RABBITMQ_HOST=rabbitmq_host
+      - RABBITMQ_HOST=rabbitmq-container  # Corrigido
       - RABBITMQ_PORT=5672
       - NGINX_HOST=nginx_host
       - NGINX_PORT=80
     ports:
-      - "3000:3000"         # <=== Mapeamento para acesso externo
+      - "3000:3000"         # Mapeamento para acesso externo
     networks:
       project-network:
         aliases:
@@ -28,7 +30,7 @@ services:
       - postgres-container
       - rabbitmq-container
 
-  #NODE CLI
+  # NODE CLI
   nodecli-container:
     build:
       context: .
@@ -41,7 +43,7 @@ services:
       - IS_CONTAINER=TRUE
       - POSTGRES_HOST=postgres_host
       - POSTGRES_PORT=5432
-      - RABBITMQ_HOST=rabbitmq_host
+      - RABBITMQ_HOST=rabbitmq-container  # Corrigido
       - RABBITMQ_PORT=5672
       - NGINX_HOST=nginx_host
       - NGINX_PORT=80
@@ -51,7 +53,7 @@ services:
       - postgres-container
       - rabbitmq-container
 
-  #NODE WORKER
+  # NODE WORKER
   nodeworker-container:
     build:
       context: .
@@ -65,7 +67,7 @@ services:
       - IS_CONTAINER=TRUE
       - POSTGRES_HOST=postgres_host
       - POSTGRES_PORT=5432
-      - RABBITMQ_HOST=rabbitmq_host
+      - RABBITMQ_HOST=rabbitmq-container  # Corrigido
       - RABBITMQ_PORT=5672
       - RABBITMQ_CONCURRENCY=2
       - NGINX_HOST=nginx_host
@@ -76,7 +78,7 @@ services:
       - postgres-container
       - rabbitmq-container
 
-  #NGINX
+  # NGINX
   nginx-container:
     build:
       context: .
@@ -92,7 +94,7 @@ services:
         aliases:
           - nginx_host
 
-  #POSTGRES
+  # POSTGRES
   postgres-container:
     image: postgres:17
     restart: unless-stopped
@@ -111,7 +113,7 @@ services:
         aliases:
           - postgres_host
 
-  #RABBITMQ
+  # RABBITMQ
   rabbitmq-container:
     image: rabbitmq:3.13.1-management-alpine
     ports:
@@ -126,8 +128,14 @@ services:
       project-network:
         aliases:
           - rabbitmq_host
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s            # Verificar a cada 30 segundos
+      retries: 5               # Tentar até 5 vezes
+      start_period: 10s        # Iniciar a verificação após 10 segundos
+      timeout: 10s             # Timeout de 10 segundos para cada verificação
 
-#OTHERS
+# OTHERS
 
 networks:
   project-network:
